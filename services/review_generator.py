@@ -8,8 +8,8 @@ def generate_review_responses(restaurant_name: str, restaurant_type: str, tone: 
         raise ValueError("GEMINI_API_KEY environment variable is not set")
         
     genai.configure(api_key=api_key)
-    # Using Gemini 1.5 Flash as it is fast and recommended for most text generation tasks
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    # Using Gemini 2.0 Flash as it is fast and recommended for most text generation tasks
+    model = genai.GenerativeModel("gemini-2.0-flash")
     
     results = []
     
