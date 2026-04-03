@@ -151,6 +151,13 @@ class BatchOutreachRequest(BaseModel):
     daily_limit: int = 10
 
 
+class WhatsAppLinkOut(BaseModel):
+    restaurant_name: str
+    rating: float
+    pain_score: float
+    phone: str
+    whatsapp_link: str
+
 # ── Daily Briefing ──
 
 class BriefingOut(BaseModel):

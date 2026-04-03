@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_db
-from app.schemas import OutreachCreate, OutreachUpdate, OutreachOut, SingleOutreachRequest, BatchOutreachRequest
+from app.schemas import OutreachCreate, OutreachUpdate, OutreachOut, SingleOutreachRequest, BatchOutreachRequest, WhatsAppLinkOut
 from app.models import Lead, OutreachLog
 from services.outreach_engine import send_outreach_email, send_batch_outreach
+from services.whatsapp_outreach import generate_whatsapp_link
 
 router = APIRouter(prefix="/api/outreach", tags=["outreach"])
 
@@ -188,3 +189,39 @@ async def morning_outreach_cron(db: AsyncSession = Depends(get_db)):
         await db.commit()
         
     return {"processed": len(batch_results), "results": batch_results}
+
+
+@router.get("/whatsapp-links", response_model=list[WhatsAppLinkOut])
+async def get_whatsapp_links(city: str, db: AsyncSession = Depends(get_db)):
+    q = select(Lead).where(
+        Lead.status == "new",
+        Lead.city == city,
+        Lead.contact_phone.isnot(None),
+        Lead.contact_phone != ""
+    )
+    result = await db.execute(q)
+    leads = result.scalars().all()
+    
+    # Sort geometrically by exact pain_score logic inside the Python domain
+    def get_pain_score(lead):
+        if lead.pain_points_json and isinstance(lead.pain_points_json, dict):
+            return float(lead.pain_points_json.get("pain_score", 0))
+        return 0.0
+        
+    leads.sort(key=get_pain_score, reverse=True)
+    
+    whatsapp_links = []
+    for lead in leads:
+        rating = lead.google_rating or 0.0
+        wa_link = generate_whatsapp_link(lead.contact_phone, lead.business_name, rating)
+        
+        if wa_link:
+            whatsapp_links.append({
+                "restaurant_name": lead.business_name,
+                "rating": rating,
+                "pain_score": get_pain_score(lead),
+                "phone": lead.contact_phone,
+                "whatsapp_link": wa_link
+            })
+            
+    return whatsapp_links
