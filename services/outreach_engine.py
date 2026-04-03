@@ -17,13 +17,16 @@ def generate_email_content(lead_data: Dict[str, Any], template_type: str = "revi
     city = lead_data.get("city", "your city")
     
     if template_type == "review_help":
+        rating = lead_data.get("google_rating", 0.0)
+        review_count = lead_data.get("review_count", 0)
         prompt = (
             f"You are the founder of GhostWork, an AI automation agency for restaurants. "
             f"Write a short, compelling cold email to the owner of {restaurant_name} located in {city}. "
             f"The focus of the email must be: 'I wrote 5 free review responses for your restaurant. Want to see them?' "
-            f"Keep it under 100 words. Do not include placeholders like [Your Name] or [Insert Link]. Sign off as 'Alex from GhostWork'. "
+            f"Mention their specific rating ({rating} stars) and their number of reviews ({review_count}). "
+            f"Keep it under 100 words. Do not include placeholders like [Your Name] or [Insert Link]. Sign off as 'GhostWork AI Services'. "
             f"The tone should be friendly, helpful, and concise. "
-            f"Format the output strictly as a JSON object with two keys: 'subject' (a clear subject line) and 'body_html' (the email body formatted with basic HTML tags like <p> and <br>)."
+            f"Format the output strictly as a JSON object with two keys: 'subject' (exactly: I wrote 5 free review responses for {restaurant_name}) and 'body_html' (the email body formatted with basic HTML tags like <p> and <br>)."
         )
     else:
         prompt = (
@@ -52,7 +55,7 @@ def send_outreach_email(lead_data: Dict[str, Any], template_type: str = "review_
 
     email_contact = lead_data.get("contact_email")
     if not email_contact:
-        return {"success": False, "error": "No contact email provided for lead"}
+        return {"success": False, "error": "no email available"}
 
     # Generate content using Gemini
     try:
@@ -90,7 +93,11 @@ async def send_batch_outreach(leads_list: List[Dict[str, Any]], db, template_typ
     for lead in leads_to_process:
         result = send_outreach_email(lead, template_type)
         
-        # Log to db
+        # Log to db only if it didn't skip due to no email
+        if not result.get("success") and result.get("error") == "no email available":
+            # Just record failure logic
+            pass
+            
         lead_id = lead.get("id")
         if lead_id:
             status = "sent" if result["success"] else "failed"

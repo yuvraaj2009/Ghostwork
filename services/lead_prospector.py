@@ -1,6 +1,32 @@
 import os
 import requests
 import time
+import re
+
+def extract_email_from_website(website_url: str) -> str | None:
+    if not website_url:
+        return None
+    try:
+        # Add a realistic User-Agent so we don't get blocked
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(website_url, timeout=5, headers=headers)
+        response.raise_for_status()
+        html = response.text
+        
+        pattern = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
+        emails = re.findall(pattern, html)
+        
+        junk_prefixes = ('noreply@', 'admin@', 'support@', 'webmaster@')
+        
+        for email in emails:
+            email_lower = email.lower()
+            if not email_lower.startswith(junk_prefixes):
+                # We return the first valid email found
+                return email_lower
+                
+        return None
+    except Exception:
+        return None
 
 def find_restaurant_leads(city: str, min_results: int = 20) -> list:
     api_key = os.environ.get("GOOGLE_PLACES_API_KEY")
@@ -80,6 +106,10 @@ def find_restaurant_leads(city: str, min_results: int = 20) -> list:
             if not website:
                 pain_score += 30.0
                 
+            email_found = None
+            if website:
+                email_found = extract_email_from_website(website)
+                
             leads.append({
                 "name": place.get("name", ""),
                 "address": place.get("formatted_address", ""),
@@ -87,6 +117,7 @@ def find_restaurant_leads(city: str, min_results: int = 20) -> list:
                 "total_reviews": total_reviews,
                 "phone": phone,
                 "website": website,
+                "email": email_found,
                 "place_id": place_id,
                 "pain_score": pain_score
             })

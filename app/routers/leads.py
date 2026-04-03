@@ -19,6 +19,7 @@ class ScoredLead(BaseModel):
     total_reviews: int
     phone: str
     website: str
+    email: str | None = None
     place_id: str
     pain_score: float
 
@@ -124,6 +125,7 @@ async def prospect_and_save_leads(request: ProspectRequest, db: AsyncSession = D
                     review_count=lead_data["total_reviews"],
                     website_url=lead_data["website"],
                     contact_phone=lead_data["phone"],
+                    contact_email=lead_data.get("email"),
                     status="new",
                     pain_points_json={"pain_score": lead_data["pain_score"], "place_id": lead_data["place_id"]}
                 )

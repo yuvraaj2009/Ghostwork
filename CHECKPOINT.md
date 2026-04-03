@@ -79,3 +79,8 @@ Local testing over Uvicorn requires `asyncpg`, which currently failed to compile
 
 ## Phase 4 Completion Status
 **Phase 4 Outreach Engine is implemented.** Endpoints for batching and single-send are ready, leveraging Gemini 2.0 Flash for personalization and Resend API for delivery.
+
+### Recent Enhancements
+1. **Email Extractor (`services/lead_prospector.py`)**: Added `extract_email_from_website` with robust regex handling, junk filtering (`noreply@`, `admin@`, etc.), and integrated it into the primary `find_restaurant_leads` to map `contact_email` directly during prospecting.
+2. **Outreach Prompt Improvements (`services/outreach_engine.py`)**: Improved the Gemini generation prompt to inject the exact Google Rating and Total Review count, offering specific sample reviews and strictly enforcing the "GhostWork AI Services" sign-off. Added safeguards returning `no email available`.
+3. **Morning Outreach Cron (`app/routers/outreach.py`)**: Added `POST /api/outreach/morning-cron` designed to autonomously target exactly 10 uncontacted leads via pure `pain_score` logic, exclusively taking those that have a validated `contact_email`.

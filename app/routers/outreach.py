@@ -138,3 +138,53 @@ async def send_batch_outreach_endpoint(request: BatchOutreachRequest, db: AsyncS
         await db.commit()
         
     return {"processed": len(batch_results), "results": batch_results}
+
+
+@router.post("/morning-cron")
+async def morning_outreach_cron(db: AsyncSession = Depends(get_db)):
+    q = select(Lead).where(
+        Lead.status == "new",
+        Lead.contact_email.isnot(None),
+        Lead.contact_email != ""
+    )
+    result = await db.execute(q)
+    leads = result.scalars().all()
+    
+    # Sort by pain_score
+    def get_pain_score(lead):
+        if lead.pain_points_json and isinstance(lead.pain_points_json, dict):
+            return float(lead.pain_points_json.get("pain_score", 0))
+        return 0.0
+        
+    leads.sort(key=get_pain_score, reverse=True)
+    top_10 = leads[:10]
+    
+    lead_data_list = []
+    for lead in top_10:
+        lead_data_list.append({
+            "id": lead.id,
+            "business_name": lead.business_name,
+            "city": lead.city,
+            "contact_email": lead.contact_email,
+            "website_url": lead.website_url,
+            "status": lead.status,
+            "google_rating": lead.google_rating,
+            "review_count": lead.review_count
+        })
+        
+    # Send batch via the engine
+    batch_results = await send_batch_outreach(
+        lead_data_list, 
+        db=db, 
+        template_type="review_help", 
+        daily_limit=10
+    )
+    
+    successful_lead_ids = [r["lead_id"] for r in batch_results if r["result"].get("success")]
+    if successful_lead_ids:
+        for lead in top_10:
+            if lead.id in successful_lead_ids and lead.status == "new":
+                lead.status = "outreach_sent"
+        await db.commit()
+        
+    return {"processed": len(batch_results), "results": batch_results}
