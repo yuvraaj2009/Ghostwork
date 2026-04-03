@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
     resend_api_key: str = ""
+    sender_email: str = "hello@ghostwork.local"
     environment: str = "development"
 
     @field_validator("database_url")

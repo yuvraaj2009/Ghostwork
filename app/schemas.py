@@ -141,6 +141,15 @@ class OutreachOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
+class SingleOutreachRequest(BaseModel):
+    lead_id: int
+    template_type: str = "review_help"
+
+class BatchOutreachRequest(BaseModel):
+    lead_ids: list[int]
+    template_type: str = "review_help"
+    daily_limit: int = 10
+
 
 # ── Daily Briefing ──
 
