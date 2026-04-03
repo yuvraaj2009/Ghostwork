@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.database import Base, init_engine
-from app.routers import leads, clients, deliverables, outreach, briefing, system, health
+from app.routers import leads, clients, deliverables, outreach, briefing, system, health, factory
 
 
 @asynccontextmanager
@@ -52,6 +52,7 @@ app.include_router(deliverables.router)
 app.include_router(outreach.router)
 app.include_router(briefing.router)
 app.include_router(system.router)
+app.include_router(factory.router)
 
 
 @app.get("/")

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import ast; import glob; [ast.parse\\(open\\(f\\).read\\(\\)\\) or print\\(f''OK: {f}''\\) for f in glob.glob\\(''app/**/*.py'', recursive=True\\)]\")",
+      "Bash(python -c \":*)",
+      "Bash(pip install:*)",
+      "Bash(python -c \"import socket; socket.getaddrinfo\\(''ep-jolly-truth-a1trcxsh-pooler.ap-southeast-1.aws.neon.tech'', 5432\\)\")",
+      "WebFetch(domain:ghostwork.onrender.com)"
+    ]
+  }
+}
